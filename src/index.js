@@ -1,9 +1,10 @@
+require("dotenv").config();
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 const axios = require("axios");
 
-const VERIFY_URL = "http://localhost:3001/chatbot/verify-number";
-const CHATBOT_URL = "http://localhost:3001/chatbot";
+const VERIFY_URL = process.env.VERIFY_URL || "http://localhost:3001/chatbot/verify-number";
+const CHATBOT_URL = process.env.CHATBOT_URL || "http://localhost:3001/chatbot";
 
 function formatWhatsAppPhone(input) {
   const numbers = input.replace(/\D/g, "");

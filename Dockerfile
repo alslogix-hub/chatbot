@@ -36,7 +36,7 @@ COPY . .
 
 RUN mkdir -p .wwebjs_auth
 
-# Criar script de inicialização
+# Criar script de inicialização MELHORADO
 RUN echo '#!/bin/bash\n\
 set -e\n\
 echo "Limpando processos e locks antigos..."\n\
@@ -45,6 +45,11 @@ pkill -9 chrome 2>/dev/null || true\n\
 rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true\n\
 rm -rf /root/.config/chromium/SingletonLock 2>/dev/null || true\n\
 rm -rf /home/*/.config/chromium/SingletonLock 2>/dev/null || true\n\
+rm -rf .wwebjs_auth/*/SingletonLock 2>/dev/null || true\n\
+rm -rf .wwebjs_auth/.singleton* 2>/dev/null || true\n\
+find .wwebjs_auth -name "SingletonLock" -delete 2>/dev/null || true\n\
+find .wwebjs_auth -name "SingletonSocket" -delete 2>/dev/null || true\n\
+find .wwebjs_auth -name "SingletonCookie" -delete 2>/dev/null || true\n\
 echo "Limpeza concluída. Iniciando aplicação..."\n\
 exec yarn start' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 

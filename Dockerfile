@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
@@ -35,4 +36,16 @@ COPY . .
 
 RUN mkdir -p .wwebjs_auth
 
-CMD ["yarn", "start"]
+# Criar script de inicialização
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Limpando processos e locks antigos..."\n\
+pkill -9 chromium 2>/dev/null || true\n\
+pkill -9 chrome 2>/dev/null || true\n\
+rm -rf /tmp/.org.chromium.Chromium.* 2>/dev/null || true\n\
+rm -rf /root/.config/chromium/SingletonLock 2>/dev/null || true\n\
+rm -rf /home/*/.config/chromium/SingletonLock 2>/dev/null || true\n\
+echo "Limpeza concluída. Iniciando aplicação..."\n\
+exec yarn start' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
+CMD ["/app/entrypoint.sh"]

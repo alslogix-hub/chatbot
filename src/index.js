@@ -1,9 +1,10 @@
+require("dotenv").config();
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 const axios = require("axios");
 
-const VERIFY_URL = "http://localhost:3001/chatbot/verify-number";
-const CHATBOT_URL = "http://localhost:3001/chatbot";
+const VERIFY_URL = process.env.VERIFY_URL || "http://localhost:3001/chatbot/verify-number";
+const CHATBOT_URL = process.env.CHATBOT_URL || "http://localhost:3001/chatbot";
 
 function formatWhatsAppNumber(raw) {
   const digits = raw.replace(/\D/g, "");
@@ -49,15 +50,27 @@ function isGroupChat(waId) {
 }
 
 const client = new Client({
-  authStrategy: new LocalAuth(),
+  authStrategy: new LocalAuth({
+    dataPath: '.wwebjs_auth'
+  }),
   puppeteer: {
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
     headless: true,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-gpu",
       "--disable-dev-shm-usage",
-    ],
+      "--no-first-run",
+      "--no-zygote",
+      "--single-process", // CRÍTICO: evita múltiplos processos
+      "--disable-extensions",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+      "--disable-features=IsolateOrigins,site-per-process",
+      "--disable-blink-features=AutomationControlled"
+    ]
   },
 });
 
@@ -108,4 +121,28 @@ client.on("message", async (message) => {
   }
 });
 
+// Tratamento de erros globais
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Received SIGINT, shutting down gracefully...');
+  await client.destroy();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Received SIGTERM, shutting down gracefully...');
+  await client.destroy();
+  process.exit(0);
+});
+
+console.log("Initializing WhatsApp client...");
 client.initialize();

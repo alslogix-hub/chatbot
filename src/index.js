@@ -5,18 +5,21 @@ const axios = require("axios");
 const VERIFY_URL = "http://localhost:3001/chatbot/verify-number";
 const CHATBOT_URL = "http://localhost:3001/chatbot";
 
-function formatWhatsAppPhone(input) {
-  const numbers = input.replace(/\D/g, "");
+function formatWhatsAppNumber(raw) {
+  const digits = raw.replace(/\D/g, "");
 
-  const withoutCountry = numbers.slice(2);
+  let local = digits.startsWith("55") ? digits.slice(2) : digits;
 
-  const areaCode = withoutCountry.slice(0, 2);
-  const phoneNumber = withoutCountry.slice(2);
+  const area = local.slice(0, 2);
+  let number = local.slice(2);
 
-  const part1 = phoneNumber.slice(0, 5);
-  const part2 = phoneNumber.slice(5);
+  if (number.length === 8) {
+    number = "9" + number;
+  }
 
-  return `(${areaCode}) ${part1}-${part2}`;
+  const formatted = `(${area}) ${number.slice(0, 5)}-${number.slice(5)}`;
+
+  return formatted;
 }
 
 async function verifyNumber(formattedNumber) {
@@ -70,8 +73,7 @@ client.on("ready", () => {
 client.on("message", async (message) => {
   try {
     if (!message.from || isGroupChat(message.from)) return;
-
-    const formatted = formatWhatsAppPhone(message.from);
+    const formatted = formatWhatsAppNumber(message.from);
     if (!formatted) {
       await message.reply("Não foi possível identificar seu número.");
       return;
